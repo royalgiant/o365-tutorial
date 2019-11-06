@@ -1,0 +1,24 @@
+<h1>My events</h1>
+<h5>
+  <%= link_to 'See Raw JSON', events_index_path(format: :json) %>
+</h5>
+<br>
+<table class="table">
+  <tr>
+    <th>Subject</th>
+    <th>Start</th>
+    <th>End</th>
+    <th>ID</th>
+    <th>Extended Props</th>
+  </tr>
+  <% @events.each do |event| %>
+    <tr>
+      <td><%= event['subject'] %></td>
+      <td><%= date_time_format(event['start']['dateTime']) %></td>
+      <td><%= date_time_format(event['end']['dateTime']) %></td>
+      <td><%= event['type'] == 'seriesMaster' ? link_to(event['id'], instances_index_path(series_master: event['id'])) : event['id'] %></td>
+      <td><%= event['extensions'] %></td>
+    </tr>
+  <% end %>
+</table>
+</br>
