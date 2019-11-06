@@ -6,7 +6,7 @@ class SubscriptionsController < ApplicationController
   end
 
   def create
-    token = get_access_token
+    token = use_outlook_api? ? get_access_token("o365") : get_access_token("graph")
     if token
       connection = Faraday.new(url: api_url) do |faraday|
         faraday.response :logger, ::Logger.new(STDOUT), bodies: true

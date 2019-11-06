@@ -5,7 +5,7 @@ class CalendarViewController < ApplicationController
   end
 
   def office_index
-    token = get_access_token
+    token = get_access_token("o365")
     if token
       connection = Faraday.new(url: 'https://outlook.office.com') do |faraday|
         faraday.response :logger
@@ -40,7 +40,7 @@ class CalendarViewController < ApplicationController
       @final_delta_token = delta_link.split('deltaToken=').last if delta_link.present? && delta_link.include?('deltaToken')
 
       @events = json_response['value']
-      
+
       respond_to do |format|
         format.json { render json: json_response }
         format.html
@@ -51,7 +51,7 @@ class CalendarViewController < ApplicationController
   end
 
   def graph_index
-    token = get_access_token
+    token = get_access_token("graph")
     if token
       connection = Faraday.new(url: 'https://graph.microsoft.com') do |faraday|
         faraday.response :logger

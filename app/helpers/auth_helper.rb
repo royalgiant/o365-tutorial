@@ -14,29 +14,45 @@ module AuthHelper
   	end
 
   	# Exchanges an authorization code for a token
-	def get_token_from_code(auth_code)
+	def get_token_from_code(auth_code, resource)
 	 	client.auth_code.get_token(auth_code,
 	                                     :redirect_uri => authorize_url,
-                                       :resource => "https://outlook.office365.com",
+                                       :resource => resource,
 	                                     :scope => SCOPES.join(' '))
 	end
 
 	# Gets the current access token
-	def get_access_token
+	def get_access_token(resource = "graph")
   		# Get the current token hash from session
-	  	token_hash = session[:azure_token]
+	  	token_hash = resource == "graph" ? session[:graph_token] : session[:o365_token]
 
-	  	token = OAuth2::AccessToken.from_hash(client, token_hash)
+      if session[:graph_token].nil? || session[:graph_token]["resource"] == "https://outlook.office365.com"
+        token_hash = session[:o365_token]
+        token_hash["resource"] = "https://graph.microsoft.com"
+        token = OAuth2::AccessToken.from_hash(client, token_hash)
+      
+        new_token = token.refresh!(:redirect_uri => authorize_url,
+                                   :resource => token_hash["resource"],
+                                   :scope => SCOPES.join(' '))
+        session[:graph_token] = new_token.to_hash
+        access_token = new_token.token
+      else
+  	  	token = OAuth2::AccessToken.from_hash(client, token_hash)
 
-	  	# Check if token is expired, refresh if so
-	  	if token.expired?
-	    	new_token = token.refresh!
-	    	# Save new token
-	    	session[:azure_token] = new_token.to_hash
-	    	access_token = new_token.token
-	  	else
-	    	access_token = token.token
-	  	end
+  	  	# Check if token is expired, refresh if so
+  	  	if token.expired?
+  	    	new_token = token.refresh!
+  	    	# Save new token
+          if resource == "graph" 
+  	    	  session[:graph_token] = new_token.to_hash
+          else
+            session[:o365_token] = new_token.to_hash
+          end
+  	    	access_token = new_token.token
+  	  	else
+  	    	access_token = token.token
+  	  	end
+      end
 	end
 
 	def client
